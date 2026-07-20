@@ -1,8 +1,16 @@
 .env
 .env.*
+!.env.example
 *.sqlite
 *.sqlite3
 node_modules/
 __pycache__/
 *.pyc
 .DS_Store
+
+# Real lead/prospect data and pipeline state — contains PII, never commit.
+data/pipeline_state.json
+data/leads.csv
+!data/leads.example.csv
+.venv/
+*.egg-info/
