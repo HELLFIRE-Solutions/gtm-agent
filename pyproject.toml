@@ -1,0 +1,26 @@
+[project]
+name = "gtm-agent"
+version = "0.1.0"
+description = "HELLFIRE AI GTM / Sales agent — warm-lead qualification, personalized outreach, DSGVO-compliant legitimate-interest tracking"
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=0.40.0",
+    "requests>=2.31.0",
+    "pydantic>=2.6.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+]
+
+[project.scripts]
+gtm-agent = "gtm_agent.cli:main"
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
