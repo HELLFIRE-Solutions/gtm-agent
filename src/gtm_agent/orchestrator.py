@@ -1,4 +1,4 @@
-"""Custom lightweight orchestrator for gtm-agent Etap 1.
+"""Custom lightweight orchestrator for gtm-agent Stage 1.
 
 Deliberately not LangGraph — see docs/architecture.md §1 for the reasoning.
 The pipeline is linear enough (qualify -> draft -> [human approval] -> send

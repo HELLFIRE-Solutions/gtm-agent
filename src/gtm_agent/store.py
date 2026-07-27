@@ -1,9 +1,9 @@
 """Minimal local JSON-file pipeline store.
 
-Etap 1 scope: HubSpot is the system of record for anything client-facing
+Stage 1 scope: HubSpot is the system of record for anything client-facing
 (see docs/architecture.md §2); this file just lets the CLI persist
 in-progress state (qualifications, drafts, send status) between separate
-command invocations without standing up a database. Etap 2 can replace this
+command invocations without standing up a database. Stage 2 can replace this
 with whatever the target client's stack already uses.
 """
 

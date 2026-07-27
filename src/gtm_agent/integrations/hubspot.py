@@ -2,7 +2,7 @@
 
 Chosen per docs/architecture.md §2 (HubSpot Free — confirmed with Bob,
 2026-07-20). Kept behind this narrow interface (upsert_contact /
-log_legitimate_interest / add_note / attach_meeting_link) so Etap 2 can swap
+log_legitimate_interest / add_note / attach_meeting_link) so Stage 2 can swap
 in a different CRM per client without touching the orchestrator.
 
 Requires custom contact properties to exist in the HubSpot portal before

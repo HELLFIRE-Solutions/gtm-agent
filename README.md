@@ -6,10 +6,10 @@ Module 1 (priority #1). AI agent for qualifying warm leads (LinkedIn/referrals �
 
 ## Technical decisions (locked 2026-07-20, details: `docs/architecture.md`)
 
-- **Orchestration:** a custom lightweight orchestrator on the Claude API (`anthropic` SDK, structured outputs), not LangGraph — Etap 1's pipeline is linear enough, and the server is shared and resource-constrained.
+- **Orchestration:** a custom lightweight orchestrator on the Claude API (`anthropic` SDK, structured outputs), not LangGraph — Stage 1's pipeline is linear enough, and the server is shared and resource-constrained.
 - **CRM:** HubSpot Free (free tier, has an API, built-in Meetings tool for booking).
 - **Legitimate interest (DSGVO):** every lead has a `LegitimateInterestRecord` — a concrete contact source, a balancing-test note, a recorded date. Without an active record the agent **refuses** to generate outreach (enforced in code, not just a process requirement).
-- **Etap 1 demo-ready criterion:** locked in with Bob — a human-in-the-loop pipeline with real email sending and reply tracking. Details: `docs/demo-ready-criteria.md`.
+- **Stage 1 demo-ready criterion:** locked in with Bob — a human-in-the-loop pipeline with real email sending and reply tracking. Details: `docs/demo-ready-criteria.md`.
 
 ## Quick start
 
@@ -32,6 +32,6 @@ gtm-agent check-replies                    # IMAP reply polling, logged to HubSp
 
 Real email sending (steps 7-8 in the demo-ready criteria) needs a verified sending domain (SPF/DKIM/DMARC) — `hellfiresol.com` (session 02/03). Until then — qualification, drafting, HubSpot sync, and meeting-link generation are fully working and demoable.
 
-**Status:** Etap 1 — code ready, waiting on a HubSpot account (no access in this session) and a domain for live sending. Not tested on real leads yet.
+**Status:** Stage 1 — code ready, waiting on a HubSpot account (no access in this session) and a domain for live sending. Not tested on real leads yet.
 
 **License:** MIT.

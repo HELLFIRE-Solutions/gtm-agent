@@ -1,8 +1,8 @@
-# Etap 1 — "Demo-ready" criteria (locked in with Bob, 2026-07-20)
+# Stage 1 — "Demo-ready" criteria (locked in with Bob, 2026-07-20)
 
 Bob selected the **expanded** option: human-in-the-loop pipeline plus real sending and reply tracking.
 
-Etap 1 is demo-ready when the agent, running against a real (small, manually-curated) HELLFIRE lead list, can:
+Stage 1 is demo-ready when the agent, running against a real (small, manually-curated) HELLFIRE lead list, can:
 
 1. **Ingest** a manually curated list of warm leads (CSV: name, company, LinkedIn URL/context, source, legitimate-interest detail) — ≥10 real contacts.
 2. **Qualify** each lead against a simple ICP rubric, with Claude's reasoning attached to the record (not just a score).
