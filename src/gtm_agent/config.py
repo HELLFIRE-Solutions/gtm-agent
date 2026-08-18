@@ -20,6 +20,7 @@ class Config:
     imap_username: str | None
     imap_password: str | None
     hubspot_meeting_link: str | None
+    database_url: str | None
 
 
 def load_config() -> Config:
@@ -36,4 +37,5 @@ def load_config() -> Config:
         imap_username=os.environ.get("IMAP_USERNAME"),
         imap_password=os.environ.get("IMAP_PASSWORD"),
         hubspot_meeting_link=os.environ.get("HUBSPOT_MEETING_LINK"),
+        database_url=os.environ.get("GTM_AGENT_DATABASE_URL"),
     )

@@ -6,6 +6,7 @@
     gtm-agent approve <lead_id>
     gtm-agent send
     gtm-agent check-replies
+    gtm-agent inbox list
 """
 
 from __future__ import annotations
@@ -16,6 +17,7 @@ import sys
 from pathlib import Path
 
 from .config import load_config
+from .inbox.db import list_inquiries
 from .integrations.email_sender import EmailSendError, send_outreach
 from .integrations.hubspot import HubSpotClient, HubSpotError
 from .integrations.reply_tracker import ReplyTrackingError, check_replies as imap_check_replies
@@ -176,6 +178,24 @@ def cmd_check_replies(args: argparse.Namespace) -> None:
     store.save()
 
 
+def cmd_inbox_list(args: argparse.Namespace) -> None:
+    config = load_config()
+    if not config.database_url:
+        print("GTM_AGENT_DATABASE_URL is not set — cannot reach internal-db", file=sys.stderr)
+        sys.exit(1)
+
+    inquiries = list_inquiries(config.database_url, limit=args.limit, classification=args.classification)
+    if not inquiries:
+        print("no chat inquiries found")
+        return
+
+    for inquiry in inquiries:
+        who = inquiry.contact_name or inquiry.contact_email or "anonymous"
+        print(f"[{inquiry.created_at:%Y-%m-%d %H:%M} UTC] {inquiry.classification.value:>18} | {who} | {inquiry.page_path or '-'}")
+        print(f"    {inquiry.message[:200]!r}")
+        print(f"    reason: {inquiry.classification_reason}")
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="gtm-agent")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -200,6 +220,13 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_replies = sub.add_parser("check-replies", help="poll the inbox for replies to sent outreach")
     p_replies.set_defaults(func=cmd_check_replies)
+
+    p_inbox = sub.add_parser("inbox", help="website chat widget inquiries")
+    p_inbox_sub = p_inbox.add_subparsers(dest="inbox_command", required=True)
+    p_inbox_list = p_inbox_sub.add_parser("list", help="show recent chat widget inquiries from internal-db")
+    p_inbox_list.add_argument("--limit", type=int, default=20)
+    p_inbox_list.add_argument("--classification", choices=["lead", "spam_or_irrelevant"], default=None)
+    p_inbox_list.set_defaults(func=cmd_inbox_list)
 
     return parser
 

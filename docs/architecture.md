@@ -1,4 +1,4 @@
-# gtm-agent — Architecture Decisions (Session 05, Stage 1)
+# gtm-agent — Architecture Decisions (Session 05, Stage 1; §5 added 2026-08-07)
 
 Status: decided in this session (2026-07-20). Supersedes the "open questions" list in the root README.
 
@@ -52,3 +52,13 @@ Every outbound message (email) requires an explicit approval step before the age
 - Consistent with this tool's own operating rules around not autonomously sending messages on a user's behalf.
 
 Implemented as a `status` field on each `OutreachDraft` (`draft → approved → sent`); the `cli.py` `send` command only sends drafts with `status == "approved"`, and approval is a separate explicit CLI action (`gtm-agent approve <lead_id>`).
+
+## 5. Website chat widget inbox (`gtm_agent.inbox`, 2026-08-07)
+
+The chat widget on `hellfiresol.com` was a pure UI mockup — every message got the same canned fallback text, nothing was stored, and the badge read "LIVE — THIS IS THE PRODUCT". Closed as its own small module rather than folded into the CSV/HubSpot pipeline above, because a chat inquiry is raw and unqualified — the opposite of a `Lead`, which requires a `LegitimateInterestRecord` before anything happens to it. There's no legitimate-interest question here: the visitor initiated contact, so §3's Art. 6(1)(f) gate doesn't apply (same carve-out office-agent's `draft_reply()` uses for inbound-initiated contact).
+
+- **Storage: `marketing.chat_inquiries`** (internal-db, `migrations/0008_marketing_chat_inquiries.sql`), not `crm`. `docs/SCHEMA.md`'s own text reserved the `marketing` schema for exactly this ("non-qualified leads from gtm-agent") back in session 04 — this is the first thing to actually land there. Connects as the scoped `marketing_app` role (`migrations/0007_scoped_app_roles.sql`), not the superuser.
+- **Classification: rule-based, not an LLM call** (`gtm_agent/inbox/classifier.py`), same reasoning as office-agent's `email_triage/classifier.py` — deterministic, free per message, testable offline, and nothing autonomous is gated on the result (Bob reviews `gtm-agent inbox list` himself, no auto-reply beyond an honest acknowledgement, no auto-promotion to a qualified `Lead`).
+- **Transport: stdlib `http.server`, not a framework.** One POST route and a health check don't justify a new dependency on the shared 1 vCPU/~1.9GB droplet (same resource reasoning as §1's LangGraph call).
+- **Same-origin, not CORS-first.** The widget POSTs a relative `/api/inbox` and nginx proxies it to the container on `127.0.0.1:8090` — avoids exposing the endpoint publicly beyond the one domain. CORS headers exist in `server.py` for local dev against a deployed backend, not as the primary access path.
+- **Not the qualification orchestrator above.** A `lead`-classified inquiry is a signal for Bob to look at, not an auto-imported `Lead` — promoting one into the CSV pipeline (with a real `LegitimateInterestRecord`, since replying to someone who wrote in first still isn't the same as *initiating* outreach to them later) is a manual step, deliberately not automated in Stage 1.

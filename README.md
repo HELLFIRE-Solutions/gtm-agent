@@ -24,9 +24,15 @@ gtm-agent list
 gtm-agent approve <lead_id>                # human approves before sending
 gtm-agent send                             # real send (needs SMTP + a verified domain)
 gtm-agent check-replies                    # IMAP reply polling, logged to HubSpot
+
+gtm-agent inbox list                       # real hellfiresol.com chat widget inquiries (needs GTM_AGENT_DATABASE_URL)
 ```
 
-`pytest tests/` — 10 tests, covering the data model (including legitimate-interest gate enforcement) and the orchestrator (Claude API mocked).
+`pytest tests/` — covers the data model (including legitimate-interest gate enforcement), the orchestrator (Claude API mocked), and the inbox classifier. Run with `pip install -e ".[dev]"`.
+
+## Website chat widget inbox (`gtm_agent.inbox`)
+
+`hellfiresol.com`'s chat widget POSTs to `/api/inbox`, which classifies (lead vs. spam/irrelevant, `gtm_agent/inbox/classifier.py`) and stores every real message in internal-db's `marketing.chat_inquiries` table — see `docs/architecture.md` §5. Deploy with `docker compose up -d --build` (needs `GTM_AGENT_DATABASE_URL` in `.env`, and internal-db's `internal-db_default` Docker network already up). Not the same thing as the CSV/HubSpot pipeline above — a chat inquiry is raw and unqualified, reviewed by Bob via `gtm-agent inbox list`, not auto-imported as a `Lead`.
 
 ## Known blocker before going live
 

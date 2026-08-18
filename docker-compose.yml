@@ -1,0 +1,20 @@
+# Deploys the chat widget inbox endpoint only (gtm_agent.inbox.server) --
+# the CLI/orchestrator is not containerized, same reasoning as
+# internal-db/rag-01's own docker-compose.yml files: one small persistent
+# service, not a full app platform. Joins internal-db's own network so it
+# can resolve the `db` container by name rather than depending on the
+# host-bound port -- see internal-db/docs/SCHEMA.md for the scoped
+# marketing_app role this connects as.
+services:
+  inbox:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "127.0.0.1:${INBOX_PORT:-8090}:8090"
+    networks:
+      - internal-db_default
+
+networks:
+  internal-db_default:
+    external: true
