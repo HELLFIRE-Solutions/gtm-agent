@@ -1,0 +1,95 @@
+name: gate
+
+# pull_request_target: the workflow definition is always read from the base
+# branch, never from the pull request, so a PR cannot edit its own gate.
+# The PR head is checked out as data only; no code from it is executed before
+# the gate scripts from the base checkout have assembled the test tree.
+on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  tests:
+    name: tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - name: Check out base commit (trusted)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+          persist-credentials: false
+
+      - name: Check out PR head commit (untrusted, used as data)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: pr
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.11"
+
+      # Gate scripts always run from base/; nothing from pr/ is executed here.
+      - name: Assemble test tree
+        run: python -I base/.github/gate/assemble.py --base base --pr pr --out work --report out/assemble.json
+
+      - name: Install project (build configuration from base)
+        run: python -I -m pip install --disable-pip-version-check "./work[dev]"
+
+      - name: Run tests on base
+        run: |
+          cfg="$(cat out/pytest-config.txt)"
+          rc=0
+          (cd base && PYTHONPATH=src pytest -c "$cfg" -p no:cacheprovider --junitxml=../out/base.xml tests) || rc=$?
+          # 0 = all passed, 1 = some tests failed; anything else is a collection or usage problem.
+          if [ "$rc" -gt 1 ]; then exit "$rc"; fi
+
+      - name: Run tests in assembled tree
+        run: |
+          cfg="$(cat out/pytest-config.txt)"
+          (cd work && pytest -c "$cfg" -p no:cacheprovider --junitxml=../out/gate.xml tests) || echo "pytest exit code: $?"
+
+      - name: Verdict
+        run: python -I base/.github/gate/verdict.py --base out/base.xml --gate out/gate.xml --out out/verdict.json
+
+      - name: Job summary
+        if: always()
+        run: |
+          python -I base/.github/gate/summary.py \
+            --assemble out/assemble.json --verdict out/verdict.json \
+            --head-sha "$HEAD_SHA" --base-sha "$BASE_SHA" >> "$GITHUB_STEP_SUMMARY"
+
+  # The owner's decision point: this job waits for approval of the
+  # `owner-gate` environment, which has a required reviewer.
+  owner-approval:
+    name: owner-approval
+    needs: tests
+    runs-on: ubuntu-latest
+    environment: owner-gate
+    permissions: {}
+    timeout-minutes: 5
+    env:
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+    steps:
+      - name: Approved head commit
+        run: echo "Owner approved head commit $HEAD_SHA"
